@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigType } from "@nestjs/config";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import databaseConfig from "src/config/database.config.js";
+import databaseConfig from "../../config/database.config.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -21,7 +21,7 @@ export const __dirname = path.dirname(__filename);
         password: db.password,
         database: db.name,
         entities: [__dirname + "/../**/*.entity{.ts,.js}"],
-        migrations: [__dirname, "../**/migrations/*.js"],
+        migrations: [__dirname + "../**/migrations/*.js"],
         synchronize: false,
         migrationsRun: false,
         migrationsTableName: "migrations",
