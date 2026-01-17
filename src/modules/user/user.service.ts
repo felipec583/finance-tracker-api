@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
 import { TypeOrmUserRepository } from "./user.repository.js";
 import { RegisterDto } from "../auth/auth.dto.js";
 import {
@@ -17,8 +17,17 @@ export class UserService {
   }
 
   async findBy(params: FindUserParamFields, value: FindUserParamFieldValues) {
-    const foundUser = await this.userRepository.findOneBy({ [params]: value });
-    if (!foundUser) throw new Error("No user found");
+    const foundUser = await this.userRepository.findOneBy({
+      [params]: value,
+    });
+    if (!foundUser)
+      throw new HttpException(
+        {
+          status: HttpStatus.BAD_REQUEST,
+          error: "No user found",
+        },
+        HttpStatus.BAD_REQUEST,
+      );
     return foundUser;
   }
 }

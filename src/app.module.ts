@@ -4,9 +4,11 @@ import { ConfigModule } from "@nestjs/config";
 import config from "./config/env.config.js";
 import databaseConfig from "./config/database.config.js";
 import { UserModule } from "./modules/user/user.module.js";
+import { AuthModule } from "./modules/auth/auth.module.js";
 
 @Module({
   imports: [
+    AuthModule,
     DatabaseModule,
     UserModule,
     ConfigModule.forRoot({
