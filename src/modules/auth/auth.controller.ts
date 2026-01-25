@@ -8,7 +8,7 @@ import {
 } from "@nestjs/common";
 import { AuthService } from "./auth.service.js";
 import { LoginDto, RegisterDto } from "./auth.dto.js";
-import { LoginReponse } from "./auth.types.js";
+import { LoginResponse } from "./auth.types.js";
 @Controller("auth")
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -17,7 +17,7 @@ export class AuthController {
   @Post("login")
   async login(
     @Body(new ValidationPipe()) userCredentials: LoginDto,
-  ): Promise<LoginReponse> {
+  ): Promise<LoginResponse> {
     const loggedInUserName = await this.authService.login(userCredentials);
     return loggedInUserName;
   }
