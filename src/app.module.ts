@@ -5,10 +5,12 @@ import config from "./config/env.config.js";
 import databaseConfig from "./config/database.config.js";
 import { UserModule } from "./modules/user/user.module.js";
 import { AuthModule } from "./modules/auth/auth.module.js";
+import { ListModule } from "./modules/list-management/list.module.js";
 
 @Module({
   imports: [
     AuthModule,
+    ListModule,
     DatabaseModule,
     UserModule,
     ConfigModule.forRoot({

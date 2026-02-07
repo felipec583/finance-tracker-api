@@ -4,3 +4,7 @@ export type LoginResponse = {
   email: string;
   accessToken: string;
 };
+
+export type UserPayloadInfo = {
+  id: number;
+};

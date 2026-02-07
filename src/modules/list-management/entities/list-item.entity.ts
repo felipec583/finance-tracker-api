@@ -37,7 +37,7 @@ export class ListItemEntity {
     type: "varchar",
     length: 255,
   })
-  freeTextName: string | null;
+  freeTextName?: string | null;
 
   @ManyToOne("ListEntity", (list: ListEntity) => list.listItems)
   @JoinColumn({ name: "list_id" })
@@ -48,5 +48,5 @@ export class ListItemEntity {
     cascade: false,
   })
   @JoinColumn({ name: "item_id" })
-  item: ItemEntity | null;
+  item?: ItemEntity | null;
 }

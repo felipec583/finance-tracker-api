@@ -8,7 +8,7 @@ import {
 
 @Injectable()
 export class UserService {
-  constructor(private userRepository: TypeOrmUserRepository) {}
+  constructor(private readonly userRepository: TypeOrmUserRepository) {}
 
   async create(userData: RegisterDto) {
     const user = this.userRepository.create(userData);
@@ -17,8 +17,10 @@ export class UserService {
   }
 
   async findBy(params: FindUserParamFields, value: FindUserParamFieldValues) {
-    const foundUser = await this.userRepository.findOneBy({
-      [params]: value,
+    const foundUser = await this.userRepository.findOne({
+      where: {
+        [params]: value,
+      },
     });
     if (!foundUser)
       throw new HttpException(

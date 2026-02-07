@@ -2,7 +2,7 @@ import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module.js";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import { GlobalExceptionFilter } from "./common/exception-filters/global-exception.js";
-import { ConsoleLogger } from "@nestjs/common";
+import { ConsoleLogger, ValidationPipe } from "@nestjs/common";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -12,7 +12,8 @@ async function bootstrap() {
       timestamp: true,
     }),
   });
-
+  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalFilters(new GlobalExceptionFilter());
   const docConfig = new DocumentBuilder()
     .setTitle("Finance Tracker API")
     .setDescription("Finance Tracker API operations")
@@ -20,8 +21,7 @@ async function bootstrap() {
     .build();
 
   const documentFactory = () => SwaggerModule.createDocument(app, docConfig);
-  SwaggerModule.setup("api", app, documentFactory);
-  app.useGlobalFilters(new GlobalExceptionFilter());
+  SwaggerModule.setup("api/docs", app, documentFactory);
 
   await app.listen(process.env.PORT ?? 3000);
 }
