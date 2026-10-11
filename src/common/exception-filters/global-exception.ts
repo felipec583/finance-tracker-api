@@ -13,6 +13,7 @@ interface ErrorResponse {
   status: number;
   message: string;
   code: string;
+  stack?: string;
 }
 interface HttpExceptionResponse {
   statusCode: number;
@@ -52,13 +53,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       `[${errorResponse.code}] ${request.method} ${request.url}`,
       errorResponse.message,
     );
-
+    let errorStack: Record<string, unknown> = {};
+    if (errorResponse.stack) {
+      errorStack = { stack: errorResponse.stack };
+    }
     response.status(errorResponse.status).json({
       statusCode: errorResponse.status,
       timestamp: new Date().toISOString(),
       path: request.url,
       message: errorResponse.message,
       code: errorResponse.code,
+      ...(errorStack ?? {}),
     });
   }
 
@@ -66,6 +71,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let code = "DB_ERROR";
     let status = HttpStatus.BAD_REQUEST;
     let message = "Database Error";
+    const stack = exception.stack;
 
     if (exception instanceof QueryFailedError) {
       const driverError = exception.driverError as PostgresError;
@@ -81,7 +87,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       }
     }
 
-    return { status, message, code };
+    return { status, message, code, stack };
   }
 
   private handleHttpError(exception: HttpException): ErrorResponse {
