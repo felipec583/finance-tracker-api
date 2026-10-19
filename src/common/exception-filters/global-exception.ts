@@ -48,10 +48,9 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       default:
         errorResponse = this.handleGenericError(exception);
     }
-
     this.logger.error(
       `[${errorResponse.code}] ${request.method} ${request.url}`,
-      errorResponse.message,
+      errorResponse.message + `[Stack: ${errorResponse.stack}]`,
     );
     let errorStack: Record<string, unknown> = {};
     if (errorResponse.stack) {
@@ -115,10 +114,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
   private handleGenericError(exception: unknown): ErrorResponse {
     const message =
       exception instanceof Error ? exception.message : "Unknown Error";
+    const errorException = exception instanceof Error ? exception : null;
     return {
       status: HttpStatus.INTERNAL_SERVER_ERROR,
       message: message,
       code: "INTERNAL_ERROR",
+      stack: errorException?.stack,
     };
   }
 }
