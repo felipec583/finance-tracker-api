@@ -4,6 +4,7 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  Column,
 } from "typeorm";
 import type { ListCategoryEntity } from "./list-category.entity.js";
 import { UserEntity } from "../../user/entities/user.entity.js";
@@ -13,6 +14,9 @@ import type { ListItemEntity } from "./list-item.entity.js";
 export class ListEntity {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({ nullable: true, type: "varchar" })
+  name: string;
 
   @JoinColumn({ name: "member_id" })
   @ManyToOne("UserEntity", (member: UserEntity) => member.lists)

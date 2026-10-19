@@ -9,6 +9,7 @@ import {
 } from "typeorm";
 import type { ListEntity } from "./list.entity.js";
 import type { ItemEntity } from "./item.entity.js";
+import { TimestampEntity } from "../../../common/entities/entity-with-timestamps.js";
 
 @Entity("list_item")
 @Check(`
@@ -24,12 +25,15 @@ import type { ItemEntity } from "./item.entity.js";
   unique: true,
   where: `"free_text_name" IS NOT NULL`,
 })
-export class ListItemEntity {
+export class ListItemEntity extends TimestampEntity {
   @PrimaryGeneratedColumn("identity")
   id: number;
 
-  @Column({ nullable: true, type: "int" })
+  @Column({ nullable: false, type: "int", default: 1 })
   quantity: number;
+
+  @Column({ nullable: false, type: "int", default: 0 })
+  price: number;
 
   @Column({
     nullable: true,
