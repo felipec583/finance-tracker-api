@@ -12,8 +12,10 @@ async function bootstrap() {
       timestamp: true,
     }),
   });
-  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalPipes(new ValidationPipe({ transform: true }));
   app.useGlobalFilters(new GlobalExceptionFilter());
+  //TODO: Change the origin later
+  app.enableCors({ origin: "*", credentials: true });
   const docConfig = new DocumentBuilder()
     .setTitle("Finance Tracker API")
     .setDescription("Finance Tracker API operations")
