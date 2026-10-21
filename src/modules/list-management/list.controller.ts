@@ -1,6 +1,5 @@
 import {
   Body,
-  ClassSerializerInterceptor,
   Controller,
   Delete,
   Get,
@@ -9,7 +8,6 @@ import {
   Patch,
   Post,
   UseGuards,
-  UseInterceptors,
   ValidationPipe,
 } from "@nestjs/common";
 import { AuthGuard } from "../auth/auth.guard.js";
@@ -17,14 +15,17 @@ import { ListService } from "./list.service.js";
 import { User } from "../user/user.decorator.js";
 import type { UserPayloadInfo } from "../auth/auth.types.js";
 import {
-  CreateListItemDto,
+  CreateListDto,
   CreateListResponseDto,
-  DeleteListItemDto,
   ListUserDto,
-  ModifyListItemDto,
 } from "./list.dto.js";
 import { ApiBearerAuth, ApiOkResponse, ApiOperation } from "@nestjs/swagger";
 import { RequireAuth } from "../../common/decorators/common.decorator.js";
+import {
+  CreateListItemsDto,
+  DeleteListItemDto,
+  ModifyListItemDto,
+} from "./list-item.dto.js";
 @UseGuards(AuthGuard)
 @ApiBearerAuth()
 @Controller("lists")
@@ -41,9 +42,12 @@ export class ListController {
   })
   async createList(
     @User() user: UserPayloadInfo,
+    @Body() listData: CreateListDto,
   ): Promise<CreateListResponseDto> {
     const newList = await this.listService.create({
       memberId: user.id,
+      name: listData?.name,
+      items: listData.items,
     });
     return { ownerId: user.id, createdAt: new Date(), listId: newList.id };
   }
@@ -58,13 +62,16 @@ export class ListController {
     return modifiedListItem;
   }
 
-  @Post("/list-item")
+  @Post("/:id/list-item")
   @ApiOperation({ summary: "Add list item to list" })
   async addItemToList(
-    @Body(new ValidationPipe()) createListItemDto: CreateListItemDto,
+    @Body(new ValidationPipe()) createListItemsDto: CreateListItemsDto,
+    @Param("id", ParseIntPipe) id: number,
   ) {
-    const modifiedListItem =
-      await this.listService.addItemToList(createListItemDto);
+    const modifiedListItem = await this.listService.addItemsToList(
+      id,
+      createListItemsDto,
+    );
     return modifiedListItem;
   }
 
@@ -90,7 +97,6 @@ export class ListController {
   @Get("/:id")
   @ApiOperation({ summary: "Get specific list " })
   @ApiOkResponse({ type: ListUserDto })
-  @UseInterceptors(ClassSerializerInterceptor)
   async getList(
     @Param("id", ParseIntPipe) params: string,
     @User() userInfo: UserPayloadInfo,

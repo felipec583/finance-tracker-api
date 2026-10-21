@@ -1,21 +1,21 @@
 import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
+import { InjectDataSource, InjectRepository } from "@nestjs/typeorm";
 import { ListEntity } from "./entities/list.entity.js";
-import { Repository } from "typeorm";
+import { DataSource, Repository } from "typeorm";
 import { ListItemEntity } from "./entities/list-item.entity.js";
-import {
-  CreateListDto,
-  CreateListItemDto,
-  DeleteListItemDto,
-  ListUserDto,
-  ModifyListItemDto,
-} from "./list.dto.js";
+import { CreateListDto, ListUserDto } from "./list.dto.js";
 import { ListCategoryEntity } from "./entities/list-category.entity.js";
 import { GENERIC_LIST_CATEGORY } from "./list.constants.js";
 import { GenericException } from "../../common/exception-filters/generic-exception.js";
 import { plainToInstance } from "class-transformer";
 import { ItemEntity } from "./entities/item.entity.js";
 import { capitalizeWord } from "../../common/helpers/capitalize-word.js";
+import { RawListItem } from "./list-item.types.js";
+import {
+  CreateListItemsDto,
+  DeleteListItemDto,
+  ModifyListItemDto,
+} from "./list-item.dto.js";
 
 @Injectable()
 export class ListService {
@@ -28,34 +28,56 @@ export class ListService {
     private listCategoryRepository: Repository<ListCategoryEntity>,
     @InjectRepository(ItemEntity)
     private itemRepository: Repository<ItemEntity>,
+    @InjectDataSource()
+    private dataSource: DataSource,
   ) {}
 
   async create(createListDto: CreateListDto) {
-    const categoryId = await this.listCategoryRepository.findOneBy({
-      name_en: GENERIC_LIST_CATEGORY,
-    });
-    const newList = this.listRepository.create({
-      listCategory: categoryId!,
-      member: { id: createListDto.memberId },
-    });
+    return this.dataSource.transaction(async (manager) => {
+      const listRepo = manager.getRepository(ListEntity);
+      const listItemRepo = manager.getRepository(ListItemEntity);
+      const categoryRepo = manager.getRepository(ListCategoryEntity);
 
-    await this.listRepository.save(newList);
-    return newList;
+      const category = await categoryRepo.findOneBy({
+        name_en: GENERIC_LIST_CATEGORY,
+      });
+      if (!category) {
+        throw new GenericException(
+          "Generic list category is not configured",
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+      const newList = listRepo.create({
+        listCategory: category,
+        member: { id: createListDto.memberId },
+        name: createListDto.name ?? "List",
+      });
+      await listRepo.save(newList);
+
+      await this.addItemsToList(newList.id, createListDto, listItemRepo);
+      return newList;
+    });
   }
 
-  async addItemToList(data: CreateListItemDto) {
-    if (data.freeTextName && data.itemId) {
-      throw new GenericException(
-        "You should either send free text or item name",
-        HttpStatus.BAD_REQUEST,
-      );
-    }
-    const newListItem = this.listItemRepository.create({
-      list: { id: data.listId },
-      item: { id: data.itemId },
-      freeTextName: data.freeTextName,
+  async addItemsToList(
+    listId: number,
+    data: CreateListItemsDto,
+    listItemRepo: Repository<ListItemEntity> = this.listItemRepository,
+  ) {
+    const newItems: RawListItem[] = data.items.map((item) => {
+      const chosenItem = item.name
+        ? { freeTextName: item.name, item: null }
+        : { item: { id: item.itemId }, freeTextName: null };
+      return {
+        list: { id: listId },
+        quantity: item.quantity,
+        price: item.price,
+        ...chosenItem,
+      };
     });
-    await this.listItemRepository.insert(newListItem);
+
+    const newListItem = listItemRepo.create(newItems);
+    await listItemRepo.insert(newListItem);
     return newListItem;
   }
 
